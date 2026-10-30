@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purple Knight – Speedrun</title>
+<meta name="description" content="Purple Knight: a pixel speedrun platformer in your browser. Race the clock and the ghost of the fastest player.">
+<meta property="og:title" content="Purple Knight – Speedrun">
+<meta property="og:description" content="Pixel speedrun platformer right in your browser – with ghost runs and a leaderboard.">
+<meta property="og:image" content="img/hero.png">
+<meta name="theme-color" content="#16131f">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preload" href="fonts/GrapeSoda.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+</head>
+<body>
+
+<!-- ═══ Website: home, level select, level leaderboard (routes in app.js) ═══ -->
+<div id="site" class="menu">
+  <div class="menu-bg" aria-hidden="true"></div>
+
+  <!-- Home: title + play (left), account (right) -->
+  <main id="screen-home" class="screen menu-grid">
+    <section class="menu-play">
+      <div class="knight-row" aria-hidden="true">
+        <div class="knight knight-run"></div>
+      </div>
+      <h1 class="title"><span>PURPLE</span> <span>KNIGHT</span></h1>
+      <p class="kicker">SPEEDRUN</p>
+      <p class="tagline">Run, jump, dash – against the clock and your own ghost.</p>
+
+      <a class="btn btn-play" href="#/levels" id="home-play"><span class="btn-label">PLAY</span></a>
+      <p class="hint" id="load-hint">The game is loading in the background.</p>
+      <p class="hint warn" id="unsupported" hidden></p>
+
+      <ul class="keys" id="keys-list" aria-label="Controls"></ul>
+      <button class="link" type="button" data-open-settings>Settings &amp; controls</button>
+    </section>
+
+    <section class="menu-side panel">
+      <h2>Account</h2>
+      <div id="acc-guest">
+        <p>Playing as <strong class="guest-name">Guest</strong>. Your times stay on this device and are not uploaded to the leaderboard.</p>
+        <button class="btn" type="button" data-open-account>Create account / sign in</button>
+      </div>
+
+      <div id="acc-user" hidden>
+        <div class="acc-row">
+          <p class="acc-hello">Signed in as <strong id="acc-name"></strong></p>
+          <div class="acc-links">
+            <button class="link" type="button" id="logout">Sign out</button>
+            <button class="link danger" type="button" id="delete-account">Delete</button>
+          </div>
+        </div>
+        <div class="code-box">
+          <span class="small muted">Recovery code</span>
+          <code id="acc-code" class="code">••••-••••-••••</code>
+          <button class="btn btn-small" type="button" id="code-toggle">Show</button>
+          <button class="btn btn-small" type="button" id="code-copy">Copy</button>
+        </div>
+        <p class="small">The code is your login on other devices. Keep it to yourself.</p>
+        <p class="small" id="acc-status"></p>
+        <div class="acc-bests" id="acc-bests"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Level select -->
+  <main id="screen-levels" class="screen screen-wide" hidden>
+    <header class="screen-head">
+      <a class="btn btn-small" href="#/">&lt; Menu</a>
+      <h2>Select level</h2>
+      <p class="who" id="levels-player"></p>
+      <button class="btn btn-small" type="button" data-open-settings>Settings</button>
+    </header>
+    <div class="cards" id="level-cards"></div>
+  </main>
+
+  <!-- One level: leaderboard (left), own rank + play (right) -->
+  <main id="screen-level" class="screen screen-wide" hidden>
+    <header class="screen-head">
+      <a class="btn btn-small" href="#/levels">&lt; Levels</a>
+      <div class="head-title">
+        <h2 id="lvl-title"></h2>
+        <p class="small muted" id="lvl-subtitle"></p>
+      </div>
+      <button class="btn btn-small" type="button" id="lb-refresh" title="Refresh leaderboard">Refresh</button>
+      <button class="btn btn-small" type="button" data-open-settings>Settings</button>
+    </header>
+
+    <div class="level-grid">
+      <section class="panel lb-panel">
+        <div class="lb-head">
+          <h3>Leaderboard</h3>
+          <span class="small muted" id="lb-status"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="lb">
+            <thead><tr><th>#</th><th>Player</th><th class="num">Time</th></tr></thead>
+            <tbody id="lb-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="level-side">
+        <div class="panel stats-panel">
+          <div id="stats-user">
+            <h3>Your rank</h3>
+            <p class="big-rank" id="st-rank">--</p>
+            <dl class="stat-grid">
+              <dt>Percentile</dt><dd id="st-pct">--</dd>
+              <dt>Best time</dt><dd id="st-best">--</dd>
+              <dt>Gap to #1</dt><dd id="st-gap">--</dd>
+            </dl>
+          </div>
+          <div id="stats-guest" hidden>
+            <h3>Guest</h3>
+            <p class="small">Your times are not uploaded. Create an account to get a rank on the leaderboard.</p>
+            <button class="btn btn-small" type="button" data-open-account>Create account</button>
+          </div>
+        </div>
+
+        <div class="panel ghost-panel">
+          <h3>Ghosts</h3>
+          <p class="race-row"><span class="small muted">Race against</span>
+            <strong id="race-name">You</strong>
+            <button class="link" type="button" id="race-reset"></button></p>
+          <p class="small muted" id="ghost-tip">Click a player in the leaderboard to race their ghost.</p>
+          <div class="watch-picks" id="watch-picks"></div>
+          <button class="btn btn-small" type="button" id="pick-watch">Pick ghosts to watch</button>
+        </div>
+
+        <button id="watch" class="btn btn-watch" type="button" disabled title="Watch the picked ghosts side by side">WATCH</button>
+        <button id="play" class="btn btn-play" type="button" disabled>
+          <span class="btn-label" id="play-label">LOADING …</span>
+          <span class="btn-progress" id="play-progress"></span>
+        </button>
+        <p class="hint" id="play-hint"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">Purple Knight · a project week game · made with Godot</footer>
+</div>
+
+<!-- ═══ Account dialog (opens on the first visit without an account) ═══ -->
+<dialog id="account-dialog" class="panel dialog" aria-labelledby="dlg-title">
+  <div id="dlg-forms">
+    <h2 id="dlg-title">Welcome, knight!</h2>
+    <p>Create an account to put your times on the online leaderboard. No email, no password – you get a recovery code instead.</p>
+    <div class="seg" role="tablist">
+      <button type="button" class="seg-btn" id="seg-create" aria-selected="true">New account</button>
+      <button type="button" class="seg-btn" id="seg-restore" aria-selected="false">I have a code</button>
+    </div>
+    <form id="create-form" class="row" autocomplete="off">
+      <label class="sr-only" for="create-name">Username</label>
+      <input id="create-name" type="text" maxlength="16" placeholder="Pick a username" spellcheck="false">
+      <button class="btn" type="submit">Create</button>
+    </form>
+    <form id="restore-form" class="row" autocomplete="off" hidden>
+      <label class="sr-only" for="restore-code">Recovery code</label>
+      <input id="restore-code" type="text" maxlength="16" placeholder="XXXX-XXXX-XXXX" spellcheck="false" class="mono-input">
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+    <p class="small" id="create-status">3–16 letters, digits, _ or -</p>
+    <p class="small" id="restore-status" hidden></p>
+    <button class="link guest-link" type="button" id="play-guest">Play as guest – records are not uploaded</button>
+  </div>
+
+  <div id="dlg-created" hidden>
+    <h2>Account created!</h2>
+    <p>Welcome, <strong id="dlg-name" class="hl"></strong>. This is your recovery code:</p>
+    <div class="code-box">
+      <code id="dlg-code" class="code"></code>
+      <button class="btn btn-small" type="button" id="dlg-copy">Copy</button>
+    </div>
+    <p class="small warn-box">Write this code down now! It is the only way back into your account on another device or after clearing your browser data.</p>
+    <p class="small" id="dlg-status"></p>
+    <button class="btn" type="button" id="dlg-done">Got it</button>
+  </div>
+</dialog>
+
+<!-- ═══ Settings dialog (works without starting the game) ═══ -->
+<dialog id="settings-dialog" class="panel dialog dialog-wide" aria-labelledby="set-title">
+  <h2 id="set-title">Settings</h2>
+  <div class="vol-row"><label for="set-music">Music</label><input id="set-music" type="range" min="0" max="100" step="5"><span id="set-music-v" class="num"></span></div>
+  <div class="vol-row"><label for="set-sfx">Sound FX</label><input id="set-sfx" type="range" min="0" max="100" step="5"><span id="set-sfx-v" class="num"></span></div>
+  <h3 class="set-sub">Controls</h3>
+  <p class="small muted" id="bind-hint">Click a slot, then press the new key. Right-click clears a slot.</p>
+  <div class="bind-grid" id="bind-grid"></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-small" type="button" id="bind-reset">Reset to defaults</button>
+    <button class="btn" type="button" id="settings-done">Done</button>
+  </div>
+</dialog>
+
+<!-- ═══ Game ═════════════════════════════════════════════════════════════ -->
+<div id="game" hidden>
+  <canvas id="canvas" tabindex="0">Your browser does not support HTML5 canvas.</canvas>
+  <div id="game-loading" class="game-loading" hidden><p>Starting …</p></div>
+</div>
+
+<script src="index.js"></script>
+<script>
+window.GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":2893236,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+window.GODOT_THREADS_ENABLED = false;
+</script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
+
